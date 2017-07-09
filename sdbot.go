@@ -2,41 +2,42 @@ package main
 
 import (
 	"log"
-	"gopkg.in/telegram-bot-api.v4"
-
+	"SDbot/cfg"
+	"SDbot/user"
+	"SDbot/telegram-bot-api.v4"
 )
 
 
 
 func main()  {
 	log.Println(" Bot was starting!")
-	bot, err := tgbotapi.NewBotAPI("")
-	if err != nil {
-		log.Panic(err)
+	log.Println("Load config from: ./sdbotcfg.json")
+	c:=new(cfg.Cfg)
+	err:=c.Load()
+	if err!=nil {
+		panic(err )
 	}
+	user.GetUserFromSQLByPhone("",c)
 
-	bot.Debug = true
+	//Init bot
+	bot, err := tgbotapi.NewBotAPI(c.T.Token)
+	if err != nil {
+		panic(err )
+	}
+	bot.Debug = c.T.Debug
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
+	u.Timeout = c.T.Timeout
  
 	updates, err := bot.GetUpdatesChan(u)
 
-	// var keyboard tgbotapi.ReplyKeyboardMarkup
-	// keyboard.ResizeKeyboard=true
-	// var phoneButton tgbotapi.KeyboardButton
-	// phoneButton.Text="Send my your phone number"	
-	// phoneButton.RequestContact=true
-	// keyboard.Keyboard=append(keyboard.Keyboard,phoneButton)
-	
 	for update := range updates {
 		if update.Message == nil {
 			continue
 		}
-
-		log.Printf("[%s] %s", update.Message.From.ID , update.Message.Text)
+		log.Printf("[%d] %s", update.Message.From.ID , update.Message.Text)
 		phoneButton:=tgbotapi.NewKeyboardButtonContact("Send my your phone number")
 		var msg tgbotapi.KeyboardMsg
 		
@@ -51,12 +52,12 @@ func main()  {
 		
 		
 		bot.Send(msg)
-	//	msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-		//msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-	//	msg.ReplyToMessageID = update.Message.MessageID
-		
-	//	bot.Send(msg)
+	
 	}
 }
 
-//func auth()
+//auth authorise user, return true if user is valid
+func auth(phone string) bool {
+	return true
+}
+
