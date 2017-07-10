@@ -3,6 +3,7 @@ package user
 import (
 	"SDbot/cfg"
 	"database/sql"
+	"regexp"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -34,6 +35,11 @@ func GetUserFromSQLByPhone(phone string, c *cfg.Cfg) (User,error) {
 		var mobile string
 		var name string
 		rows.Scan(&id,&mobile,&name)
+		regExp:=regexp.MustCompile("\\D")
+		mobile=regExp.ReplaceAllString(mobile,"")
+		if mobile==phone {
+			
+		}
 		println(id,"\t",mobile,"\t",name)
 	}
 	return User{},nil

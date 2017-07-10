@@ -7,28 +7,28 @@ import (
 
 //TConnection Telegram connection structure
 type TConnection struct {
-	Token string	`json:"token"`
-	Timeout	int	`json:"timeout"`
-	Debug bool `json:"debug"`
+	Token   string `json:"token"`
+	Timeout int    `json:"timeout"`
+	Debug   bool   `json:"debug"`
 }
 
 //MsqlConnection mysql connection structure
 type MsqlConnection struct {
-	Host	string	`json:"host"`
-	Port	string	`json:"port"`
-	Database	string	`json:"database"`
-	User	string	`json:"user"`
-	Pass	string	`json:"pass"`
+	Host     string `json:"host"`
+	Port     string `json:"port"`
+	Database string `json:"database"`
+	User     string `json:"user"`
+	Pass     string `json:"pass"`
 }
 
 //Cfg structure for sdbot
 type Cfg struct {
-	T TConnection	`json:"telegram"`
+	T TConnection    `json:"telegram"`
 	M MsqlConnection `json:"mysql"`
 }
 
 //Load config from "./sdbotcfg.json"
-func (c *Cfg)Load() error {
+func (c *Cfg) Load() error {
 	file, err := os.Open("./sdbotcfg.json")
 	defer file.Close()
 	if err != nil {
