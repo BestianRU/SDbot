@@ -15,8 +15,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	user.GetUserFromSQLByPhone("", c)
-
+	user,err:=user.GetUserFromSQLByPhone("79622754090", c)
+	if err != nil {
+		panic(err)
+	}
+	log.Println(user)
+	
 	//Init bot
 	bot, err := tgbotapi.NewBotAPI(c.T.Token)
 	if err != nil {
