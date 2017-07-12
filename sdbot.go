@@ -2,9 +2,10 @@ package main
 
 import (
 	"SDbot/cfg"
-	"SDbot/telegram-bot-api.v4"
 	"SDbot/user"
 	"log"
+
+	"SDbot/telegram-bot-api.v4"
 )
 
 func main() {
@@ -15,12 +16,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	user,err:=user.GetUserFromSQLByPhone("79622754090", c)
+
+	user, err := user.GetUserFromSQLByPhone("79622754090", c)
 	if err != nil {
 		panic(err)
 	}
 	log.Println(user)
-	
+
 	//Init bot
 	bot, err := tgbotapi.NewBotAPI(c.T.Token)
 	if err != nil {
