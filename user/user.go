@@ -30,10 +30,10 @@ type DBer interface {
 }
 
 type rowsScanner interface {
-	Columns() ([]string, error)
+	//	Columns() ([]string, error)
 	Next() bool
-	Close() error
-	Err() error
+	//	Close() error
+	//	Err() error
 	scanner
 }
 
