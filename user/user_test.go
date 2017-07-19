@@ -75,21 +75,6 @@ func (d testDB) QueryRow(query string, args ...interface{}) scanner {
 	return d.QueryRow(query, args...)
 }
 
-// func TestGetUserFromSQLByPhone(t *testing.T) {
-// 	var db testDB
-
-// 	u, err := getUserFromSQLByPhone("1234567890", db)
-// 	if err != nil {
-// 		t.Error("Error in getUserFromSQLByPhone", err)
-// 	}
-// 	if u.Phone != "1234567890" {
-// 		t.Error("Expected return phone 1234567890, got:", u.Phone)
-// 	}
-// 	if u.Email != "email@gmail.com" {
-// 		t.Error("Expected return Email email@gmail.com, got:", u.Email)
-// 	}
-// }
-
 func TestGetUserFullName(t *testing.T) {
 	var u User
 	var db testDB
