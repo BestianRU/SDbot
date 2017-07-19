@@ -3,6 +3,7 @@ package user
 import (
 	"SDbot/cfg"
 	"database/sql"
+	"errors"
 	"regexp"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -10,11 +11,11 @@ import (
 
 //User is structure for authorized user
 type User struct {
-	TId       int64 //telegram id
-	FirstName string
-	LastName  string
-	Email     string
-	Phone     string
+	TId      uint64 //telegram user id
+	SDId     uint64 //SD user id
+	FullName string
+	Email    string
+	Phone    string
 }
 
 //UserMap is map for authorizesd users
@@ -25,16 +26,17 @@ type DBer interface {
 	//	Ping() error
 	Close() error
 	//	Execute(query string, args ...interface{}) error
-	Query(query string, args ...interface{}) (rowsScanner, error)
+	Query(query string, args ...interface{}) (rowser, error)
 	QueryRow(query string, args ...interface{}) scanner
 }
 
-type rowsScanner interface {
+type rowser interface {
 	//	Columns() ([]string, error)
 	Next() bool
 	//	Close() error
 	//	Err() error
-	scanner
+	//scanner
+	Scan(dest ...interface{}) error
 }
 
 type scanner interface {
@@ -50,7 +52,7 @@ func (db *mySQLBackend) Close() error {
 	return db.db.Close()
 }
 
-func (db *mySQLBackend) Query(query string, args ...interface{}) (rowsScanner, error) {
+func (db *mySQLBackend) Query(query string, args ...interface{}) (rowser, error) {
 	return db.db.Query(query, args...)
 }
 
@@ -67,42 +69,53 @@ func newMySQL(connectionString string) (DBer, error) {
 	return &mySQLBackend{db: dbMySQL}, err
 }
 
-//GetUserFromSQLByPhone Receiving user data by its phone number
+//getUserMail
+func getUserMail(u *User, db DBer) error {
+	err := db.QueryRow("SELECT email FROM glpi_useremails WHERE users_id=?", u.SDId).Scan(&u.Email)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+//GetUserFromSQLByPhone getting user data by his phone number
 func GetUserFromSQLByPhone(phone string, c *cfg.Cfg) (User, error) {
 	db, err := newMySQL(c.M.User + ":" + c.M.Pass + "@tcp(" + c.M.Host + ":" + c.M.Port + ")/" + c.M.Database)
 	if err != nil {
 		return User{}, err
 	}
-	u, err := getUserFromSQLByPhone(phone, db)
+	defer db.Close()
+	var u User
+	err = getUserFullName(phone, &u, db)
+	if err != nil {
+		return User{}, err
+	}
+	err = getUserMail(&u, db)
 	if err != nil {
 		return User{}, err
 	}
 	return u, nil
 }
 
-//getUserFromSQLByPhone Receiving user data by its phone number
-func getUserFromSQLByPhone(phone string, db DBer) (User, error) {
-	defer db.Close()
+//getUserFullName getting user FullName by his phone number
+func getUserFullName(phone string, u *User, db DBer) error {
+
 	rows, err := db.Query("SELECT id,mobile,comment FROM glpi_users WHERE mobile IS NOT NULL AND comment IS NOT NULL")
 	if err != nil {
-		return User{}, err
+		return err
 	}
 	for rows.Next() {
-		var id int
-		var u User
-		err = rows.Scan(&id, &u.Phone, &u.FirstName)
+		err = rows.Scan(&u.SDId, &u.Phone, &u.FullName)
 		if err != nil {
-			return User{}, err
+			return err
 		}
 		regExp := regexp.MustCompile("\\D")
 		u.Phone = regExp.ReplaceAllString(u.Phone, "")
 		if u.Phone == phone {
-			err = db.QueryRow("SELECT email FROM glpi_useremails WHERE users_id=?", id).Scan(&u.Email)
-			if err != nil {
-				return User{}, err
-			}
-			return u, err
+
+			return nil
 		}
 	}
-	return User{}, nil
+	return errors.New("user not found in SD")
 }
