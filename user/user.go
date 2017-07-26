@@ -23,23 +23,12 @@ type UserMap map[string]User
 
 //DBer interface for MySQL DB
 type DBer interface {
-	//	Ping() error
 	Close() error
-	//	Execute(query string, args ...interface{}) error
 	Query(query string, args ...interface{}) (rowser, error)
-	QueryRow(query string, args ...interface{}) scanner
 }
 
 type rowser interface {
-	//	Columns() ([]string, error)
 	Next() bool
-	//	Close() error
-	//	Err() error
-	//scanner
-	Scan(dest ...interface{}) error
-}
-
-type scanner interface {
 	Scan(dest ...interface{}) error
 }
 
@@ -56,10 +45,6 @@ func (db *mySQLBackend) Query(query string, args ...interface{}) (rowser, error)
 	return db.db.Query(query, args...)
 }
 
-func (db *mySQLBackend) QueryRow(query string, args ...interface{}) scanner {
-	return db.db.QueryRow(query, args...)
-}
-
 //newMySQL open mysql connection
 func newMySQL(connectionString string) (DBer, error) {
 	dbMySQL, err := sql.Open("mysql", connectionString)
@@ -71,11 +56,19 @@ func newMySQL(connectionString string) (DBer, error) {
 
 //getUserMail
 func getUserMail(u *User, db DBer) error {
-	err := db.QueryRow("SELECT email FROM glpi_useremails WHERE users_id=?", u.SDId).Scan(&u.Email)
+	rows, err := db.Query("SELECT email FROM glpi_useremails WHERE users_id=?", u.SDId)
 	if err != nil {
 		return err
 	}
-	return nil
+	for rows.Next() {
+		err = rows.Scan(&u.Email)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	return errors.New("Email not found")
 
 }
 

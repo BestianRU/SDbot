@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	log.Println(" Bot was starting!")
+	log.Println("Bot was starting!")
 	log.Println("Load config from: ./sdbotcfg.json")
 	c := new(cfg.Cfg)
 	err := c.Load()

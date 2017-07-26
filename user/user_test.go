@@ -1,9 +1,6 @@
 package user
 
-import (
-	"errors"
-	"testing"
-)
+import "testing"
 
 type testData struct {
 	id    uint64
@@ -11,41 +8,32 @@ type testData struct {
 	mail  string
 	name  string
 }
-
-var d = []testData{
-	{phone: "+1-2(3)456 7890 ",
-		mail: "abc_123@cde.com",
-		id:   12345,
-		name: "Ivan",
-	},
-	{phone: " +1-2(3)456 789990 ",
-		mail: "abc@cde_567.com",
-		id:   12346,
-		name: "test name"},
-}
-
 type testDB struct {
-	//DBer
 	rows *testRows
 }
 type testRows struct {
 	thisRow int
+	date    []testData
 }
 
 func (r *testRows) Next() bool {
-	if len(d) > r.thisRow-1 {
+	if len(r.date) > r.thisRow {
 		return true
 	}
 	return false
 }
 
 func (r *testRows) Scan(dest ...interface{}) error {
-	if len(dest) != 3 {
-		return errors.New("Scan must have 3 arguments")
+	//test for Query("SELECT id,mobile,comment FROM glpi_users WHERE mobile IS NOT NULL AND comment IS NOT NULL")
+	if len(dest) == 3 {
+		*dest[0].(*uint64) = r.date[r.thisRow].id
+		*dest[1].(*string) = r.date[r.thisRow].phone
+		*dest[2].(*string) = r.date[r.thisRow].name
 	}
-	*dest[0].(*uint64) = d[r.thisRow].id
-	*dest[1].(*string) = d[r.thisRow].phone
-	*dest[2].(*string) = d[r.thisRow].name
+	//test for Query("SELECT email FROM glpi_useremails WHERE users_id=?", u.SDId)
+	if len(dest) == 1 {
+		*dest[0].(*string) = r.date[r.thisRow].mail
+	}
 	r.thisRow++
 	return nil
 }
@@ -57,28 +45,47 @@ type testRow struct {
 	mail     string
 }
 
-func (r testRow) Scan(dest ...interface{}) error {
-
-	dest[0] = "email@gmail.com"
-	return nil
-}
-
 func (d testDB) Close() error {
 	return nil
 }
 
 func (d testDB) Query(query string, args ...interface{}) (rowser, error) {
-	return d.rows, nil
-}
+	d.rows = new(testRows)
+	switch query {
+	case "SELECT email FROM glpi_useremails WHERE users_id=?":
+		if args[0].(uint64) == 12346 {
+			d.rows.date = []testData{
+				{
+					phone: " +1-2(3)456 789990 ",
+					mail:  "abc@cde_567.com",
+					id:    12346,
+					name:  "test name"},
+			}
+		}
 
-func (d testDB) QueryRow(query string, args ...interface{}) scanner {
-	return d.QueryRow(query, args...)
+		return d.rows, nil
+	case "SELECT id,mobile,comment FROM glpi_users WHERE mobile IS NOT NULL AND comment IS NOT NULL":
+		d.rows.date = []testData{
+			{phone: "+1-2(3)456 7890 ",
+				mail: "abc_123@cde.com",
+				id:   12345,
+				name: "Ivan",
+			},
+			{phone: " +1-2(3)456 789990 ",
+				mail: "abc@cde_567.com",
+				id:   12346,
+				name: "test name"},
+		}
+		return d.rows, nil
+
+	}
+	return d.rows, nil
 }
 
 func TestGetUserFullName(t *testing.T) {
 	var u User
 	var db testDB
-	db.rows = new(testRows)
+	//	db.rows = new(testRows)
 
 	testPhone := "123456789990"
 	err := getUserFullName(testPhone, &u, db)
@@ -94,4 +101,33 @@ func TestGetUserFullName(t *testing.T) {
 	if u.SDId != 12346 {
 		t.Error("Error returning SDId from getUserFullName", u.SDId)
 	}
+
+	testPhone = "1"
+	err = getUserFullName(testPhone, &u, db)
+	if err == nil {
+		t.Error("Error in getUserFullName expected error if user not found but return nil", err)
+	}
+
+}
+
+func TestGetUserMail(t *testing.T) {
+	var u User
+	var db testDB
+	//	db.rows = new(testRows)
+	u.SDId = 12346
+
+	err := getUserMail(&u, db)
+	if err != nil {
+		t.Error("Error in getUserMail", err)
+	}
+	if u.Email != "abc@cde_567.com" {
+		t.Error("Error returning Email from getUserMail expected abc@cde_567.com but return", u.Email)
+	}
+
+	u.SDId = 123
+	err = getUserMail(&u, db)
+	if err == nil {
+		t.Error("Error in getUserMail expected error if user not found but return nil")
+	}
+
 }
