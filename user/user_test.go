@@ -10,8 +10,8 @@ type testFile struct {
 
 func (f *testFile) Read(ret []byte) (int, error) {
 	var i int
-	ret = make([]byte, len(f.data))
-	if i := copy(ret, f.data); i == 0 {
+
+	if i = copy(ret, f.data); i == 0 {
 		return 0, errors.New("Error reading file")
 	}
 	return i, nil
@@ -125,7 +125,7 @@ func TestAuthUser(t *testing.T) {
 	if newAU.read(tf) != nil {
 		t.Error("Error test reading for AuthUser")
 	}
-	if reflect.DeepEqual(au, newAU) {
+	if !reflect.DeepEqual(au.MapUser, newAU.MapUser) {
 		t.Error("Error test to compare structure after writing and readin for AuthUser")
 	}
 

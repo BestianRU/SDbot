@@ -3,14 +3,11 @@ package user
 import (
 	"SDbot/cfg"
 	"database/sql"
-	"errors"
-	"regexp"
-
-	"os"
-
 	"encoding/json"
-
+	"errors"
 	"io"
+	"os"
+	"regexp"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -71,12 +68,12 @@ func (a *AuthUser) save(w io.Writer) error {
 
 //read AuthUser from file
 func (a *AuthUser) read(r io.Reader) error {
-	var jsonAuthUser []byte
-	_, err := r.Read(jsonAuthUser)
+	jsonAuthUser := make([]byte, 10000)
+	i, err := r.Read(jsonAuthUser)
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(jsonAuthUser, a)
+	err = json.Unmarshal(jsonAuthUser[:i], a)
 	if err != nil {
 		return err
 	}
