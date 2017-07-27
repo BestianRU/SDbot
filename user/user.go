@@ -6,6 +6,12 @@ import (
 	"errors"
 	"regexp"
 
+	"os"
+
+	"encoding/json"
+
+	"io"
+
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -18,8 +24,83 @@ type User struct {
 	Phone    string
 }
 
-//UserMap is map for authorizesd users
-type UserMap map[string]User
+//MapUser map of authorized users with email index
+type MapUser map[string]User
+
+//AuthUser is map for authorizesd users
+type AuthUser struct {
+	MapUser
+}
+
+//NewAuthUser AuthUser
+func NewAuthUser(c *cfg.Cfg) *AuthUser {
+	a := new(AuthUser)
+	f, err := os.OpenFile(c.AuthUser, os.O_RDONLY, os.FileMode(0660))
+	if err != nil {
+		return nil
+	}
+	err = a.read(f, c)
+	if err != nil {
+		return nil
+	}
+	return a
+}
+
+//Add new authirised user
+func (a *AuthUser) Add(u User, c *cfg.Cfg) error {
+	a.MapUser[u.Email] = u
+	f, err := os.OpenFile(c.AuthUser, os.O_RDWR, os.FileMode(0660))
+	if err != nil {
+		return err
+	}
+	return a.save(f, c)
+}
+
+//save AuthUser to file
+func (a *AuthUser) save(w io.Writer, c *cfg.Cfg) error {
+	jsonAuthUser, err := json.Marshal(a)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(jsonAuthUser)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//read AuthUser from file
+func (a *AuthUser) read(r io.Reader, c *cfg.Cfg) error {
+	var jsonAuthUser []byte
+	_, err := r.Read(jsonAuthUser)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(jsonAuthUser, a)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//GetByPhone find user by phone
+func (a *AuthUser) GetByPhone(p string) (User, error) {
+	for _, v := range a.MapUser {
+		if v.Phone == p {
+			return v, nil
+		}
+	}
+	return User{}, errors.New("User isn't authorized")
+
+}
+
+//GetByEmail find user by email
+func (a *AuthUser) GetByEmail(e string) (User, error) {
+	if u, ok := a.MapUser[e]; ok {
+		return u, nil
+	}
+	return User{}, errors.New("User isn't authorized")
+}
 
 //DBer interface for MySQL DB
 type DBer interface {

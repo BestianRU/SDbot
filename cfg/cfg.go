@@ -23,8 +23,9 @@ type MsqlConnection struct {
 
 //Cfg structure for sdbot
 type Cfg struct {
-	T TConnection    `json:"telegram"`
-	M MsqlConnection `json:"mysql"`
+	T        TConnection    `json:"telegram"`
+	M        MsqlConnection `json:"mysql"`
+	AuthUser string         `json:"authUser"`
 }
 
 //Load config from "./sdbotcfg.json"

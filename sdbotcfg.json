@@ -11,8 +11,7 @@
             "database":"glpi",
             "user":"glpi",
             "pass":"123456"
-        }
-
-   
+        },
+        "authUser":"authuser.json"
 
 }
