@@ -1,6 +1,30 @@
 package user
 
 import "testing"
+import "errors"
+import "reflect"
+
+type testFile struct {
+	data []byte
+}
+
+func (f *testFile) Read(ret []byte) (int, error) {
+	var i int
+	ret = make([]byte, len(f.data))
+	if i := copy(ret, f.data); i == 0 {
+		return 0, errors.New("Error reading file")
+	}
+	return i, nil
+}
+
+func (f *testFile) Write(ret []byte) (int, error) {
+	var i int
+	f.data = make([]byte, len(ret))
+	if i = copy(f.data, ret); i == 0 {
+		return 0, errors.New("Error writing file")
+	}
+	return i, nil
+}
 
 type testData struct {
 	id    uint64
@@ -82,10 +106,33 @@ func (d testDB) Query(query string, args ...interface{}) (rowser, error) {
 	return d.rows, nil
 }
 
+func TestAuthUser(t *testing.T) {
+	tf := new(testFile)
+	var au AuthUser
+	au.MapUser = make(map[string]User)
+	au.MapUser["abc_123@cde.com"] = User{
+		TId:      123,
+		SDId:     345,
+		Phone:    "+1-2(3)456 7890 ",
+		Email:    "abc_123@cde.com",
+		FullName: "Ivan",
+	}
+	if au.save(tf) != nil {
+		t.Error("Error test writing for AuthUser")
+	}
+	var newAU AuthUser
+	newAU.MapUser = make(map[string]User)
+	if newAU.read(tf) != nil {
+		t.Error("Error test reading for AuthUser")
+	}
+	if reflect.DeepEqual(au, newAU) {
+		t.Error("Error test to compare structure after writing and readin for AuthUser")
+	}
+
+}
 func TestGetUserFullName(t *testing.T) {
 	var u User
 	var db testDB
-	//	db.rows = new(testRows)
 
 	testPhone := "123456789990"
 	err := getUserFullName(testPhone, &u, db)

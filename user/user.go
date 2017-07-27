@@ -39,7 +39,7 @@ func NewAuthUser(c *cfg.Cfg) *AuthUser {
 	if err != nil {
 		return nil
 	}
-	err = a.read(f, c)
+	err = a.read(f)
 	if err != nil {
 		return nil
 	}
@@ -53,11 +53,11 @@ func (a *AuthUser) Add(u User, c *cfg.Cfg) error {
 	if err != nil {
 		return err
 	}
-	return a.save(f, c)
+	return a.save(f)
 }
 
 //save AuthUser to file
-func (a *AuthUser) save(w io.Writer, c *cfg.Cfg) error {
+func (a *AuthUser) save(w io.Writer) error {
 	jsonAuthUser, err := json.Marshal(a)
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func (a *AuthUser) save(w io.Writer, c *cfg.Cfg) error {
 }
 
 //read AuthUser from file
-func (a *AuthUser) read(r io.Reader, c *cfg.Cfg) error {
+func (a *AuthUser) read(r io.Reader) error {
 	var jsonAuthUser []byte
 	_, err := r.Read(jsonAuthUser)
 	if err != nil {
