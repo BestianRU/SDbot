@@ -8,7 +8,7 @@ import (
 	"io"
 	"os"
 	"regexp"
-
+	//import mysqldriver
 	_ "github.com/go-sql-driver/mysql"
 )
 
