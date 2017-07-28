@@ -129,13 +129,18 @@ func TestAuthUser(t *testing.T) {
 		t.Error("Error test to compare structure after writing and readin for AuthUser")
 	}
 
-	testUser, err := au.GetByPhone("1234567890")
+	testUser, err := au.GetByTId(123)
 	if (!reflect.DeepEqual(testUser, au.MapUser["abc_123@cde.com"])) || (err != nil) {
 		t.Error("Error in GetByPhone for AuthUser")
 	}
 	testUser, err = au.GetByEmail("abc_123@cde.com")
 	if (!reflect.DeepEqual(testUser, au.MapUser["abc_123@cde.com"])) || (err != nil) {
 		t.Error("Error in GetByEmail for AuthUser")
+	}
+
+	testUser, err = au.GetByPhone("1234567890")
+	if (!reflect.DeepEqual(testUser, au.MapUser["abc_123@cde.com"])) || (err != nil) {
+		t.Error("Error in GetByPhone for AuthUser")
 	}
 
 	if au.Delete("1234567890") != nil {

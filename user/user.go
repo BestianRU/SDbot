@@ -101,6 +101,17 @@ func (a *AuthUser) GetByPhone(p string) (User, error) {
 
 }
 
+//GetByTId find user by telegram Id
+func (a *AuthUser) GetByTId(t uint64) (User, error) {
+	for _, v := range a.MapUser {
+		if v.TId == t {
+			return v, nil
+		}
+	}
+	return User{}, errors.New("User isn't authorized")
+
+}
+
 //GetByEmail find user by email
 func (a *AuthUser) GetByEmail(e string) (User, error) {
 	if u, ok := a.MapUser[e]; ok {
