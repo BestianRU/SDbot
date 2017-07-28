@@ -113,7 +113,7 @@ func TestAuthUser(t *testing.T) {
 	au.MapUser["abc_123@cde.com"] = User{
 		TId:      123,
 		SDId:     345,
-		Phone:    "+1-2(3)456 7890 ",
+		Phone:    "1234567890",
 		Email:    "abc_123@cde.com",
 		FullName: "Ivan",
 	}
@@ -127,6 +127,24 @@ func TestAuthUser(t *testing.T) {
 	}
 	if !reflect.DeepEqual(au.MapUser, newAU.MapUser) {
 		t.Error("Error test to compare structure after writing and readin for AuthUser")
+	}
+
+	testUser, err := au.GetByPhone("1234567890")
+	if (!reflect.DeepEqual(testUser, au.MapUser["abc_123@cde.com"])) || (err != nil) {
+		t.Error("Error in GetByPhone for AuthUser")
+	}
+	testUser, err = au.GetByEmail("abc_123@cde.com")
+	if (!reflect.DeepEqual(testUser, au.MapUser["abc_123@cde.com"])) || (err != nil) {
+		t.Error("Error in GetByEmail for AuthUser")
+	}
+
+	if au.Delete("1234567890") != nil {
+		t.Error("Error in Delete for AuthUser")
+	}
+
+	_, err = au.GetByPhone("1234567890")
+	if err == nil {
+		t.Error("Expected delete user by phone 1234567890 from AuthUser, but user is existed")
 	}
 
 }
