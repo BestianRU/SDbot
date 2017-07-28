@@ -80,10 +80,31 @@ func (a *AuthUser) read(r io.Reader) error {
 	return nil
 }
 
+//Delete user by phone from map of authorized users
+func (a *AuthUser) Delete(phone string) error {
+	u, err := a.GetByPhone(phone)
+	if err != nil {
+		return err
+	}
+	delete(a.MapUser, u.Email)
+	return nil
+}
+
 //GetByPhone find user by phone
 func (a *AuthUser) GetByPhone(p string) (User, error) {
 	for _, v := range a.MapUser {
 		if v.Phone == p {
+			return v, nil
+		}
+	}
+	return User{}, errors.New("User isn't authorized")
+
+}
+
+//GetByTId find user by telegram Id
+func (a *AuthUser) GetByTId(t uint64) (User, error) {
+	for _, v := range a.MapUser {
+		if v.TId == t {
 			return v, nil
 		}
 	}

@@ -1,7 +1,7 @@
 {
    
         "telegram": {
-            "token":"",
+            "token":"444627597:AAEWpF0PxsiaiS0kgqVZ9QRz_PnWED4F8kE",
             "timeout":60,
             "debug":true
         }, 
@@ -12,6 +12,7 @@
             "user":"glpi",
             "pass":"123456"
         },
-        "authUser":"authuser.json"
+        "authUser":"authuser.json",
+        "msgNotAuth": "You are not authorized. Please, send me command /auth and allow me reading your phone number."
 
 }

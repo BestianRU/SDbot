@@ -23,14 +23,15 @@ type MsqlConnection struct {
 
 //Cfg structure for sdbot
 type Cfg struct {
-	T        TConnection    `json:"telegram"`
-	M        MsqlConnection `json:"mysql"`
-	AuthUser string         `json:"authUser"`
+	T          TConnection    `json:"telegram"`
+	M          MsqlConnection `json:"mysql"`
+	AuthUser   string         `json:"authUser"`
+	MsgNotAuth string         `json:"msgNotAuth"`
 }
 
 //Load config from "./sdbotcfg.json"
 func (c *Cfg) Load() error {
-	file, err := os.Open("./sdbotcfg.json")
+	file, err := os.Open("sdbotcfg.json")
 	defer file.Close()
 	if err != nil {
 		return err
