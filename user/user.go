@@ -211,3 +211,37 @@ func getUserFullName(phone string, u *User, db DBer) error {
 	}
 	return errors.New("user not found in SD")
 }
+
+type Notification struct {
+	id    int
+	email string
+	text  string
+}
+
+//GetLastNotification return one last notification, if ther arn't any new notifications to return empty Notification{} and error
+func GetLastNotification(db DBer, lastId *int) (Notification, error) {
+
+	var rows rowser
+	if *lastId != 0 {
+		rows, err := db.Query("SELECT id,recipient,body_html FROM glpi_queuedmails WHERE id>=$1 LIMIT 1", lastId)
+		if err != nil {
+			return Notification{}, err
+		}
+		var n Notification
+		err = rows.Scan(&n.id, &n.email, &n.text)
+	}
+
+	//if lastId==0
+	var id int
+	rows, err := db.Query("SELECT MAX(id) FROM glpi_queuedmails")
+	if err != nil {
+		return Notification{}, err
+	}
+	rows.Scan(&id)
+	if err != nil {
+		return Notification{}, err
+	}
+	*lastId = id
+	return Notification{}, nil
+
+}
