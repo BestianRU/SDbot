@@ -4,6 +4,7 @@ import (
 	"SDbot/cfg"
 	"SDbot/user"
 	"log"
+	"time"
 
 	tgbotapi "github.com/DmitryBugrov/telegram-bot-api"
 )
@@ -44,6 +45,7 @@ func main() {
 	}
 	out := make(chan tgbotapi.Chattable, 512)
 	go ReadMessages(in, out, au, c)
+	go ReaderNotifications(au, out, c)
 	//go SendMessages(bot, out)
 	//send message
 	for msg := range out {
@@ -55,11 +57,6 @@ func main() {
 
 	}
 }
-
-//auth authorise user, return true if user is valid
-// func auth(phone string) bool {
-// 	return true
-// }
 
 //ReadMessages from telegram
 func ReadMessages(in tgbotapi.UpdatesChannel, out chan tgbotapi.Chattable, au *user.AuthUser, c *cfg.Cfg) {
@@ -80,32 +77,28 @@ func ReadMessages(in tgbotapi.UpdatesChannel, out chan tgbotapi.Chattable, au *u
 		//user not authorized
 		if _, err := au.GetByTId(uint64(update.Message.From.ID)); err != nil {
 			if update.Message.Contact == nil {
-				msg := tgbotapi.NewMessage(int64(update.Message.From.ID), c.Msg.MsgNotAuth)
-				out <- msg
+				SendMessage(int64(update.Message.From.ID), c.Msg.MsgNotAuth, out)
 				continue
 			}
 			if update.Message.Contact.PhoneNumber == "" {
-				msg := tgbotapi.NewMessage(int64(update.Message.From.ID), c.Msg.MsgNotAuth)
-				out <- msg
+				SendMessage(int64(update.Message.From.ID), c.Msg.MsgNotAuth, out)
 				continue
 			}
 			//if client send your phone number
 			u, err := user.GetUserFromSQLByPhone(update.Message.Contact.PhoneNumber, c)
 			//phone number not found
 			if err != nil {
-				msg := tgbotapi.NewMessage(int64(update.Message.From.ID), c.Msg.PhoneNotFound)
-				out <- msg
+				SendMessage(int64(update.Message.From.ID), c.Msg.PhoneNotFound, out)
 				continue
 			}
-			//add new user
+			//phone number exist, add new user
 			u.TId = uint64(update.Message.From.ID)
 			err = au.Add(u, c)
 			if err != nil {
 				log.Println(err)
 				continue
 			}
-			msg := tgbotapi.NewMessage(int64(update.Message.From.ID), c.Msg.AuthMsg)
-			out <- msg
+			SendMessage(int64(update.Message.From.ID), c.Msg.AuthMsg, out)
 
 		}
 
@@ -136,3 +129,32 @@ func RequestPhone(id int64, c *cfg.Cfg) tgbotapi.MessageConfig {
 // 		bot.Send(msg)
 // 	}
 // }
+
+func ReaderNotifications(au *user.AuthUser, out chan tgbotapi.Chattable, c *cfg.Cfg) {
+	LastId := 0
+	for {
+		PrevId := LastId
+		n, err := user.GetLastNotification(&LastId, c)
+		if err != nil {
+			log.Println(err)
+			time.Sleep(time.Duration(c.NotificationsPeriod) * time.Second)
+			continue
+		}
+		if PrevId == LastId {
+			log.Println("There aren't any notifications")
+			time.Sleep(time.Duration(c.NotificationsPeriod) * time.Second)
+			continue
+		}
+		tid, err := au.GetTIdbyEmail(n.Email)
+		if err == nil {
+			SendMessage(int64(tid), n.Text, out)
+		}
+
+	}
+}
+
+//SendMessage to telegram user
+func SendMessage(id int64, text string, out chan tgbotapi.Chattable) {
+	msg := tgbotapi.NewMessage(id, text)
+	out <- msg
+}

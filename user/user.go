@@ -116,6 +116,16 @@ func (a *AuthUser) GetByTId(t uint64) (User, error) {
 
 }
 
+//GetTIdbyEmail
+func (a *AuthUser) GetTIdbyEmail(email string) (uint64, error) {
+	u, err := a.GetByEmail(email)
+	if err != nil {
+		return 0, err
+	}
+	return u.TId, nil
+
+}
+
 //GetByEmail find user by email
 func (a *AuthUser) GetByEmail(e string) (User, error) {
 	if u, ok := a.MapUser[e]; ok {
@@ -216,36 +226,52 @@ func getUserFullName(phone string, u *User, db DBer) error {
 	return errors.New("user not found in SD")
 }
 
+//Notification structure return from SD
 type Notification struct {
-	id    int
-	email string
-	text  string
+	Id    int
+	Email string
+	Text  string
 }
 
 //GetLastNotification return one last notification, if ther arn't any new notifications to return empty Notification{} and error
-func GetLastNotification(db DBer, lastId *int) (Notification, error) {
+func GetLastNotification(lastID *int, c *cfg.Cfg) (Notification, error) {
+	db, err := newMySQL(c.M.User + ":" + c.M.Pass + "@tcp(" + c.M.Host + ":" + c.M.Port + ")/" + c.M.Database)
+	if err != nil {
+		return Notification{}, err
+	}
+	defer db.Close()
+	return getLastNotification(db, lastID, c)
+}
 
+func getLastNotification(db DBer, lastID *int, c *cfg.Cfg) (Notification, error) {
 	var rows rowser
-	if *lastId != 0 {
-		rows, err := db.Query("SELECT id,recipient,body_html FROM glpi_queuedmails WHERE id>=$1 LIMIT 1", lastId)
+	if *lastID != 0 {
+		rows, err := db.Query("SELECT id,recipient,body_html FROM glpi_queuedmails WHERE id>? LIMIT 1", lastID)
 		if err != nil {
 			return Notification{}, err
 		}
 		var n Notification
-		err = rows.Scan(&n.id, &n.email, &n.text)
+		if rows.Next() {
+			err = rows.Scan(&n.Id, &n.Email, &n.Text)
+			*lastID = n.Id
+		}
+		return n, nil
 	}
 
-	//if lastId==0
+	//if lastID==0
 	var id int
 	rows, err := db.Query("SELECT MAX(id) FROM glpi_queuedmails")
 	if err != nil {
 		return Notification{}, err
 	}
-	rows.Scan(&id)
-	if err != nil {
-		return Notification{}, err
+	if rows.Next() {
+		err = rows.Scan(&id)
+		if err != nil {
+			return Notification{}, err
+		}
 	}
-	*lastId = id
+
+	*lastID = id
 	return Notification{}, nil
 
 }

@@ -32,10 +32,11 @@ type Messages struct {
 
 //Cfg structure for sdbot
 type Cfg struct {
-	T        TConnection    `json:"telegram"`
-	M        MsqlConnection `json:"mysql"`
-	AuthUser string         `json:"authUser"`
-	Msg      Messages       `json:"messages"`
+	T                   TConnection    `json:"telegram"`
+	M                   MsqlConnection `json:"mysql"`
+	AuthUser            string         `json:"authUser"`
+	Msg                 Messages       `json:"messages"`
+	NotificationsPeriod int64          `json:"notificationsPeriod"`
 }
 
 //Load config from "./sdbotcfg.json"

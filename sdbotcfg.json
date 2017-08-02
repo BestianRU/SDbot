@@ -13,6 +13,7 @@
             "pass":"123456"
         },
         "authUser":"authuser.json",
+        "notificationsPeriod":60,
         "messages":{
             "msgNotAuth": "You are not authorized. Please, send me command /auth and allow me reading your phone number.",
             "textPhoneButton":"Send my your phone number",
