@@ -18,14 +18,12 @@ func main() {
 		panic(err)
 	}
 
-	// user, err := user.GetUserFromSQLByPhone("79622754090", c)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// log.Println(user)
-
 	//Init map of authorized users
-	au := user.NewAuthUser(c)
+	au, err := user.NewAuthUser(c)
+	if err != nil {
+		log.Println("Error load authorized users:", c.AuthUser)
+		panic(err)
+	}
 
 	//Init bot
 	bot, err := tgbotapi.NewBotAPI(c.T.Token)
@@ -40,37 +38,101 @@ func main() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = c.T.Timeout
 
-	updates, err := bot.GetUpdatesChan(u)
+	in, err := bot.GetUpdatesChan(u)
 	if err != nil {
 		panic(err)
 	}
-
-	for update := range updates {
-		if update.Message == nil {
-			continue
+	out := make(chan tgbotapi.Chattable, 512)
+	go ReadMessages(in, out, au, c)
+	//go SendMessages(bot, out)
+	//send message
+	for msg := range out {
+		_, err := bot.Send(msg)
+		if err != nil {
+			log.Println(err)
 		}
-		//user not authorized
-		if _, err = au.GetByTId(uint64(update.Message.From.ID)); err != nil {
-			msg := tgbotapi.NewMessage(int64(update.Message.From.ID), c.MsgNotAuth)
-			bot.Send(msg)
-		}
-		//	log.Printf("[%d] %s", update.Message.From.ID, update.Message.Text)
-		//	phoneButton := tgbotapi.NewKeyboardButtonContact("Send my your phone number")
-		//	var msg tgbotapi.KeyboardMsg
-
-		// row := make([]tgbotapi.KeyboardButton, 1)
-		// row = append(row, phoneButton)
-		// msg.Keyboard = append(msg.Keyboard, row)
-
-		// msg.ResizeKeyboard = true
-
-		// msg.ChatID = update.Message.Chat.ID
-		// msg.Text = "Send my your phone number"
+		//	log.Println(m)
 
 	}
 }
 
 //auth authorise user, return true if user is valid
-func auth(phone string) bool {
-	return true
+// func auth(phone string) bool {
+// 	return true
+// }
+
+//ReadMessages from telegram
+func ReadMessages(in tgbotapi.UpdatesChannel, out chan tgbotapi.Chattable, au *user.AuthUser, c *cfg.Cfg) {
+	for update := range in {
+		if update.Message == nil {
+			continue
+		}
+		//read command
+		if update.Message.IsCommand() {
+			switch update.Message.Command() {
+			case "auth":
+				//	msg := tgbotapi.NewMessage(int64(update.Message.From.ID), "/auth")
+				out <- RequestPhone(int64(update.Message.From.ID), c)
+			}
+			continue
+		}
+
+		//user not authorized
+		if _, err := au.GetByTId(uint64(update.Message.From.ID)); err != nil {
+			if update.Message.Contact == nil {
+				msg := tgbotapi.NewMessage(int64(update.Message.From.ID), c.Msg.MsgNotAuth)
+				out <- msg
+				continue
+			}
+			if update.Message.Contact.PhoneNumber == "" {
+				msg := tgbotapi.NewMessage(int64(update.Message.From.ID), c.Msg.MsgNotAuth)
+				out <- msg
+				continue
+			}
+			//if client send your phone number
+			u, err := user.GetUserFromSQLByPhone(update.Message.Contact.PhoneNumber, c)
+			//phone number not found
+			if err != nil {
+				msg := tgbotapi.NewMessage(int64(update.Message.From.ID), c.Msg.PhoneNotFound)
+				out <- msg
+				continue
+			}
+			//add new user
+			u.TId = uint64(update.Message.From.ID)
+			err = au.Add(u, c)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			msg := tgbotapi.NewMessage(int64(update.Message.From.ID), c.Msg.AuthMsg)
+			out <- msg
+
+		}
+
+	}
 }
+
+//RequestPhone create message with button getting phone number
+func RequestPhone(id int64, c *cfg.Cfg) tgbotapi.MessageConfig {
+
+	var msg tgbotapi.MessageConfig
+	phoneButton := tgbotapi.NewKeyboardButtonContact(c.Msg.TextPhoneButton)
+	row := tgbotapi.NewKeyboardButtonRow(phoneButton)
+	keyboard := tgbotapi.ReplyKeyboardMarkup{
+		OneTimeKeyboard: true,
+		ResizeKeyboard:  true,
+	}
+	keyboard.Keyboard = append(keyboard.Keyboard, row)
+	msg.ReplyMarkup = keyboard
+	msg.Text = c.Msg.RequestPhone
+	msg.ChatID = id
+	return msg
+
+}
+
+//SendMessages send message to telegram
+// func SendMessages(bot *tgbotapi.BotAPI, out chan tgbotapi.Chattable) {
+// 	for msg := range out {
+// 		bot.Send(msg)
+// 	}
+// }

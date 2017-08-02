@@ -21,12 +21,21 @@ type MsqlConnection struct {
 	Pass     string `json:"pass"`
 }
 
+//Messages structure for text messages
+type Messages struct {
+	MsgNotAuth      string `json:"msgNotAuth"`
+	TextPhoneButton string `json:"textPhoneButton"`
+	RequestPhone    string `json:"requestPhone"`
+	PhoneNotFound   string `json:"phoneNotFound"`
+	AuthMsg         string `json:"authMsg"`
+}
+
 //Cfg structure for sdbot
 type Cfg struct {
-	T          TConnection    `json:"telegram"`
-	M          MsqlConnection `json:"mysql"`
-	AuthUser   string         `json:"authUser"`
-	MsgNotAuth string         `json:"msgNotAuth"`
+	T        TConnection    `json:"telegram"`
+	M        MsqlConnection `json:"mysql"`
+	AuthUser string         `json:"authUser"`
+	Msg      Messages       `json:"messages"`
 }
 
 //Load config from "./sdbotcfg.json"

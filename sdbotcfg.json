@@ -13,6 +13,11 @@
             "pass":"123456"
         },
         "authUser":"authuser.json",
-        "msgNotAuth": "You are not authorized. Please, send me command /auth and allow me reading your phone number."
-
+        "messages":{
+            "msgNotAuth": "You are not authorized. Please, send me command /auth and allow me reading your phone number.",
+            "textPhoneButton":"Send my your phone number",
+            "requestPhone":"Please click to button below",
+            "phoneNotFound":"Sorry, but your phone number not found in Service Desk, please check your contact information in Service Desk",
+            "authMsg":"You are authorized!"
+        }
 }

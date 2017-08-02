@@ -14,11 +14,11 @@ import (
 
 //User is structure for authorized user
 type User struct {
-	TId      uint64 //telegram user id
-	SDId     uint64 //SD user id
-	FullName string
-	Email    string
-	Phone    string
+	TId      uint64 `json:"tid"`  //telegram user id
+	SDId     uint64 `json:"sdid"` //SD user id
+	FullName string `json:"fullanme"`
+	Email    string `json:"email"`
+	Phone    string `json:"phone"`
 }
 
 //MapUser map of authorized users with email index
@@ -26,25 +26,29 @@ type MapUser map[string]User
 
 //AuthUser is map for authorizesd users
 type AuthUser struct {
-	MapUser
+	MapUser `json:"users"`
 }
 
 //NewAuthUser AuthUser
-func NewAuthUser(c *cfg.Cfg) *AuthUser {
+func NewAuthUser(c *cfg.Cfg) (*AuthUser, error) {
 	a := new(AuthUser)
+	a.MapUser = make(map[string]User, 10)
 	f, err := os.OpenFile(c.AuthUser, os.O_RDONLY, os.FileMode(0660))
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	err = a.read(f)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return a
+	return a, nil
 }
 
-//Add new authirised user
+//Add new authorized user
 func (a *AuthUser) Add(u User, c *cfg.Cfg) error {
+	if u.Email == "" {
+		return errors.New("User not found email" + u.FullName)
+	}
 	a.MapUser[u.Email] = u
 	f, err := os.OpenFile(c.AuthUser, os.O_RDWR, os.FileMode(0660))
 	if err != nil {
@@ -55,7 +59,7 @@ func (a *AuthUser) Add(u User, c *cfg.Cfg) error {
 
 //save AuthUser to file
 func (a *AuthUser) save(w io.Writer) error {
-	jsonAuthUser, err := json.Marshal(a)
+	jsonAuthUser, err := json.MarshalIndent(a, "", "\t")
 	if err != nil {
 		return err
 	}
