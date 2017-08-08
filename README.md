@@ -35,7 +35,7 @@ The bot is waiting new notifications for users and send them telegram messages. 
 3. Start sdbot
 
 ## Using ##
-After starting you can find bot by name in your telegramm client. For your identification you must allow reading your mobile number. For it, send command    "/auth". If your phone number exist in GLPI you authorized. Now you will receive all the messages from the GLPI, which the servicedesk sends you by e-mail.
+After starting you can find bot by name in your telegramm client. For your identification you must allow reading your mobile number. For it, send command    "/auth". If your phone number exist in GLPI you are authorized. Now you will receive all the messages from the GLPI, which the servicedesk sends you by e-mail.
 
 
 
