@@ -1,9 +1,9 @@
 {
    
         "telegram": {
-            "token":"444627597:AAEWpF0PxsiaiS0kgqVZ9QRz_PnWED4F8kE",
+            "token":"token for bot",
             "timeout":60,
-            "debug":true
+            "debug":false
         }, 
         "mysql"  :{
             "host":"127.0.0.1",
@@ -19,6 +19,7 @@
             "textPhoneButton":"Send my your phone number",
             "requestPhone":"Please click to button below",
             "phoneNotFound":"Sorry, but your phone number not found in Service Desk, please check your contact information in Service Desk",
-            "authMsg":"You are authorized!"
+            "authMsg":"You are authorized!",
+            "idontknow":"Sorry, but I don't know that mean: "
         }
 }

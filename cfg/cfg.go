@@ -28,6 +28,7 @@ type Messages struct {
 	RequestPhone    string `json:"requestPhone"`
 	PhoneNotFound   string `json:"phoneNotFound"`
 	AuthMsg         string `json:"authMsg"`
+	IDontKnow       string `json:"idontknow"`
 }
 
 //Cfg structure for sdbot

@@ -67,15 +67,16 @@ func ReadMessages(in tgbotapi.UpdatesChannel, out chan tgbotapi.Chattable, au *u
 		//read command
 		if update.Message.IsCommand() {
 			switch update.Message.Command() {
+			//auth - send request telephone number
 			case "auth":
-				//	msg := tgbotapi.NewMessage(int64(update.Message.From.ID), "/auth")
 				out <- RequestPhone(int64(update.Message.From.ID), c)
 			}
 			continue
 		}
 
-		//user not authorized
+		//client isn't authorized
 		if _, err := au.GetByTId(uint64(update.Message.From.ID)); err != nil {
+			//we dont't have contact information from user, sending MsgNotAuth message to client
 			if update.Message.Contact == nil {
 				SendMessage(int64(update.Message.From.ID), c.Msg.MsgNotAuth, out)
 				continue
@@ -91,7 +92,7 @@ func ReadMessages(in tgbotapi.UpdatesChannel, out chan tgbotapi.Chattable, au *u
 				SendMessage(int64(update.Message.From.ID), c.Msg.PhoneNotFound, out)
 				continue
 			}
-			//phone number exist, add new user
+			//phone number exist, add new client
 			u.TId = uint64(update.Message.From.ID)
 			err = au.Add(u, c)
 			if err != nil {
@@ -99,8 +100,12 @@ func ReadMessages(in tgbotapi.UpdatesChannel, out chan tgbotapi.Chattable, au *u
 				continue
 			}
 			SendMessage(int64(update.Message.From.ID), c.Msg.AuthMsg, out)
-
+			continue
 		}
+
+		//client is authorized
+		textMsg := c.Msg.IDontKnow + update.Message.Text
+		SendMessage(int64(update.Message.From.ID), textMsg, out)
 
 	}
 }
@@ -123,25 +128,19 @@ func RequestPhone(id int64, c *cfg.Cfg) tgbotapi.MessageConfig {
 
 }
 
-//SendMessages send message to telegram
-// func SendMessages(bot *tgbotapi.BotAPI, out chan tgbotapi.Chattable) {
-// 	for msg := range out {
-// 		bot.Send(msg)
-// 	}
-// }
-
+//ReaderNotifications read new notification from ServiceDesk and send them from chanell 'out'
 func ReaderNotifications(au *user.AuthUser, out chan tgbotapi.Chattable, c *cfg.Cfg) {
-	LastId := 0
+	LastID := 0
 	for {
-		PrevId := LastId
-		n, err := user.GetLastNotification(&LastId, c)
+		PrevId := LastID
+		n, err := user.GetLastNotification(&LastID, c)
 		if err != nil {
 			log.Println(err)
 			time.Sleep(time.Duration(c.NotificationsPeriod) * time.Second)
 			continue
 		}
-		if PrevId == LastId {
-			log.Println("There aren't any notifications")
+		if PrevId == LastID {
+			//	log.Println("There aren't any notifications")
 			time.Sleep(time.Duration(c.NotificationsPeriod) * time.Second)
 			continue
 		}

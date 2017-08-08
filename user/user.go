@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strings"
 	//import mysqldriver
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -174,10 +175,12 @@ func getUserMail(u *User, db DBer) error {
 		return err
 	}
 	for rows.Next() {
-		err = rows.Scan(&u.Email)
+		var mail string
+		err = rows.Scan(&mail)
 		if err != nil {
 			return err
 		}
+		u.Email = strings.ToLower(mail)
 		return nil
 	}
 
@@ -219,7 +222,6 @@ func getUserFullName(phone string, u *User, db DBer) error {
 		regExp := regexp.MustCompile("\\D")
 		u.Phone = regExp.ReplaceAllString(u.Phone, "")
 		if u.Phone == phone {
-
 			return nil
 		}
 	}
@@ -246,7 +248,7 @@ func GetLastNotification(lastID *int, c *cfg.Cfg) (Notification, error) {
 func getLastNotification(db DBer, lastID *int, c *cfg.Cfg) (Notification, error) {
 	var rows rowser
 	if *lastID != 0 {
-		rows, err := db.Query("SELECT id,recipient,body_html FROM glpi_queuedmails WHERE id>? LIMIT 1", lastID)
+		rows, err := db.Query("SELECT id,recipient,body_text FROM glpi_queuedmails WHERE id>? LIMIT 1", lastID)
 		if err != nil {
 			return Notification{}, err
 		}
@@ -257,8 +259,6 @@ func getLastNotification(db DBer, lastID *int, c *cfg.Cfg) (Notification, error)
 		}
 		return n, nil
 	}
-
-	//if lastID==0
 	var id int
 	rows, err := db.Query("SELECT MAX(id) FROM glpi_queuedmails")
 	if err != nil {
